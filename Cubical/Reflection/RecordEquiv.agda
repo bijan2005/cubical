@@ -80,10 +80,10 @@ module Internal where
   convertFun : Assoc → R.Term
   convertFun al = vlam "ρ" (convertTerm al (v 0))
 
-  convertMacro : Assoc → R.Term → R.TC Unit
+  convertMacro : Assoc → R.Term → R.TC ⊤
   convertMacro al hole = R.unify hole (convertFun al)
 
-  equivMacro : Assoc → R.Term → R.TC Unit
+  equivMacro : Assoc → R.Term → R.TC ⊤
   equivMacro al hole =
     newMeta R.unknown >>= λ hole₁ →
     newMeta R.unknown >>= λ hole₂ →
@@ -107,27 +107,27 @@ open Internal
 
 macro
   -- ΣFormat → <Σ-Type> ≃ <RecordType>
-  Σ≃Record : ΣFormat → R.Term → R.TC Unit
+  Σ≃Record : ΣFormat → R.Term → R.TC ⊤
   Σ≃Record sig = equivMacro (ΣFormat→Assoc sig)
 
   -- ΣFormat → <RecordType> ≃ <Σ-Type>
-  Record≃Σ : ΣFormat → R.Term → R.TC Unit
+  Record≃Σ : ΣFormat → R.Term → R.TC ⊤
   Record≃Σ sig = equivMacro (flipAssoc (ΣFormat→Assoc sig))
 
   -- <RecordTypeName> → <Σ-Type> ≃ <RecordType>
-  FlatΣ≃Record : R.Name → R.Term → R.TC Unit
+  FlatΣ≃Record : R.Name → R.Term → R.TC ⊤
   FlatΣ≃Record name hole =
     recordName→ΣFormat name >>= λ sig →
     equivMacro (MaybeΣFormat→Assoc sig) hole
 
   -- <RecordTypeName> → <RecordType> ≃ <Σ-Type>
-  Record≃FlatΣ : R.Name → R.Term → R.TC Unit
+  Record≃FlatΣ : R.Name → R.Term → R.TC ⊤
   Record≃FlatΣ name hole =
     recordName→ΣFormat name >>= λ sig →
     equivMacro (flipAssoc (MaybeΣFormat→Assoc sig)) hole
 
   -- ΣFormat → <RecordType₁> ≃ <RecordType₂>
-  Record≃Record : Assoc → R.Term → R.TC Unit
+  Record≃Record : Assoc → R.Term → R.TC ⊤
   Record≃Record = equivMacro
 
 
@@ -157,8 +157,8 @@ module Example where
   Example0' : Example B ≃ (Σ[ a ∈ A ] Σ[ a' ∈ A ] B a)
   Example0' = Record≃FlatΣ Example
 
-  Example0'' : Unit ≃ Unit -- any record with no fields is equivalent to unit
-  Example0'' = FlatΣ≃Record Unit
+  Example0'' : ⊤ ≃ ⊤ -- any record with no fields is equivalent to unit
+  Example0'' = FlatΣ≃Record ⊤
 
   {-
     Example: Equivalence between an arbitrarily arrange Σ-type and record type using Σ≃Record

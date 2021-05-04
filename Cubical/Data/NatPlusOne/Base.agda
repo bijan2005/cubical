@@ -10,6 +10,8 @@ record ℕ₊₁ : Type₀ where
   field
     n : ℕ
 
+{-# DISPLAY 1+_ n = suc n #-}
+
 pattern one = 1+ zero
 pattern 2+_ n = 1+ (suc n)
 
@@ -27,6 +29,6 @@ suc₊₁ (1+ n) = 1+ (suc n)
 open import Cubical.Data.Nat.Literals public
 
 instance
-  fromNatℕ₊₁ : HasFromNat ℕ₊₁
-  fromNatℕ₊₁ = record { Constraint = λ { zero → ⊥ ; _ → Unit }
+  fromNatℕ₊₁ : FromNat ℕ₊₁
+  fromNatℕ₊₁ = record { Constraint = λ { zero → ⊥ ; _ → ⊤ }
                       ; fromNat = λ { (suc n) → 1+ n } }

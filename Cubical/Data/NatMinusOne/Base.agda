@@ -4,6 +4,7 @@ module Cubical.Data.NatMinusOne.Base where
 open import Cubical.Core.Primitives
 open import Cubical.Data.Nat
 open import Cubical.Data.Empty
+open import Cubical.Data.Int.Base using (ℤ; pos; negsuc; -_)
 
 record ℕ₋₁ : Type₀ where
   constructor -1+_
@@ -24,10 +25,10 @@ suc₋₁ (-1+ n) = -1+ (suc n)
 open import Cubical.Data.Nat.Literals public
 
 instance
-  fromNatℕ₋₁ : HasFromNat ℕ₋₁
-  fromNatℕ₋₁ = record { Constraint = λ _ → Unit ; fromNat = ℕ→ℕ₋₁ }
+  fromNatℕ₋₁ : FromNat ℕ₋₁
+  fromNatℕ₋₁ = record { Constraint = λ _ → ⊤ ; fromNat = ℕ→ℕ₋₁ }
 
 instance
-  fromNegℕ₋₁ : HasFromNeg ℕ₋₁
-  fromNegℕ₋₁ = record { Constraint = λ { (suc (suc _)) → ⊥ ; _ → Unit }
-                       ; fromNeg = λ { zero → 0 ; (suc zero) → neg1 } }
+  negativeℕ₋₁ : Negative ℕ₋₁
+  negativeℕ₋₁ = record { Constraint = λ { (suc (suc _)) → ⊥ ; _ → ⊤ }
+                      ; fromNeg = λ { zero → 0 ; (suc zero) → neg1 } }

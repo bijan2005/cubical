@@ -9,18 +9,29 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat
 open import Cubical.Data.Sigma
+open import Cubical.Data.Prod using (_,_)
 open import Cubical.Data.Unit
 open import Cubical.Relation.Nullary
+open import Cubical.Algebra
 
 open import Cubical.Data.List.Base
 
 module _ {ℓ} {A : Type ℓ} where
 
-  ++-unit-r : (xs : List A) → xs ++ [] ≡ xs
-  ++-unit-r [] = refl
-  ++-unit-r (x ∷ xs) = cong (_∷_ x) (++-unit-r xs)
+  private
+    _++′_ = _++_ {A = A}
 
-  ++-assoc : (xs ys zs : List A) → (xs ++ ys) ++ zs ≡ xs ++ ys ++ zs
+  ++-identityˡ : LeftIdentity [] _++′_
+  ++-identityˡ _ = refl
+
+  ++-identityʳ : RightIdentity [] _++′_
+  ++-identityʳ [] = refl
+  ++-identityʳ (x ∷ xs) = cong (_∷_ x) (++-identityʳ xs)
+
+  ++-identity : Identity [] _++′_
+  ++-identity = ++-identityˡ , ++-identityʳ
+
+  ++-assoc : Associative (_++_ {A = A})
   ++-assoc [] ys zs = refl
   ++-assoc (x ∷ xs) ys zs = cong (_∷_ x) (++-assoc xs ys zs)
 
@@ -29,7 +40,7 @@ module _ {ℓ} {A : Type ℓ} where
   rev-snoc (x ∷ xs) y = cong (_++ [ x ]) (rev-snoc xs y)
 
   rev-++ : (xs ys : List A) → rev (xs ++ ys) ≡ rev ys ++ rev xs
-  rev-++ [] ys = sym (++-unit-r (rev ys))
+  rev-++ [] ys = sym (++-identityʳ (rev ys))
   rev-++ (x ∷ xs) ys =
     cong (λ zs → zs ++ [ x ]) (rev-++ xs ys)
     ∙ ++-assoc (rev ys) (rev xs) [ x ]
@@ -58,14 +69,14 @@ module _ {ℓ} {A : Type ℓ} where
   snocView xs = helper nil xs
     where
     helper : {l : List A} -> SnocView l -> (r : List A) -> SnocView (l ++ r)
-    helper {l} sl [] = subst SnocView (sym (++-unit-r l)) sl
+    helper {l} sl [] = subst SnocView (sym (++-identityʳ l)) sl
     helper {l} sl (x ∷ r) = subst SnocView (++-assoc l (x ∷ []) r) (helper (snoc x l sl) r)
 
 -- Path space of list type
 module ListPath {ℓ} {A : Type ℓ} where
 
   Cover : List A → List A → Type ℓ
-  Cover [] [] = Lift Unit
+  Cover [] [] = Lift ⊤
   Cover [] (_ ∷ _) = Lift ⊥
   Cover (_ ∷ _) [] = Lift ⊥
   Cover (x ∷ xs) (y ∷ ys) = (x ≡ y) × Cover xs ys
@@ -98,7 +109,7 @@ module ListPath {ℓ} {A : Type ℓ} where
   isOfHLevelCover : (n : HLevel) (p : isOfHLevel (suc (suc n)) A)
     (xs ys : List A) → isOfHLevel (suc n) (Cover xs ys)
   isOfHLevelCover n p [] [] =
-    isOfHLevelLift (suc n) (isProp→isOfHLevelSuc n isPropUnit)
+    isOfHLevelLift (suc n) (isProp→isOfHLevelSuc n isProp⊤)
   isOfHLevelCover n p [] (y ∷ ys) =
     isOfHLevelLift (suc n) (isProp→isOfHLevelSuc n isProp⊥)
   isOfHLevelCover n p (x ∷ xs) [] =
@@ -174,3 +185,34 @@ discreteList eqA (x ∷ xs) (y ∷ ys) with eqA x y | discreteList eqA xs ys
 foldrCons : (xs : List A) → foldr _∷_ [] xs ≡ xs
 foldrCons [] = refl
 foldrCons (x ∷ xs) = cong (x ∷_) (foldrCons xs)
+
+------------------------------------------------------------------------
+-- Structures of List
+
+module Structures {ℓ} {A : Type ℓ} (isSetA : isSet A) where
+
+  List-isMagma : IsMagma (List A) _++_
+  List-isMagma = record { is-set = isOfHLevelList 0 isSetA }
+
+  ListMagma : Magma ℓ
+  ListMagma = record { isMagma = List-isMagma }
+
+
+  List-isSemigroup : IsSemigroup (List A) _++_
+  List-isSemigroup = record
+    { isMagma = List-isMagma
+    ; assoc   = ++-assoc
+    }
+
+  ListSemigroup : Semigroup ℓ
+  ListSemigroup = record { isSemigroup = List-isSemigroup }
+
+
+  List-isMonoid : IsMonoid (List A) _++_ []
+  List-isMonoid = record
+    { isSemigroup = List-isSemigroup
+    ; identity    = ++-identity
+    }
+
+  ListMonoid : Monoid ℓ
+  ListMonoid = record { isMonoid = List-isMonoid }

@@ -105,7 +105,7 @@ module _ {A : Type ℓ} {B : A → Type ℓ₁} {C : (x : A) → B x → Type �
 
 
 -- n-ary non-dependent funext
-nAryFunExt : {X : Type ℓ} {Y : I → Type ℓ₁} (n : ℕ) (fX : nAryOp n X (Y i0)) (fY : nAryOp n X (Y i1))
+nAryFunExt : (n : ℕ) {X : Type ℓ} {Y : I → Type ℓ₁} (fX : nAryOp n X (Y i0)) (fY : nAryOp n X (Y i1))
            → ((xs : Vec X n) → PathP Y (fX $ⁿ xs) (fY $ⁿ map (λ x → x) xs))
            → PathP (λ i → nAryOp n X (Y i)) fX fY
 nAryFunExt zero fX fY p        = p []
@@ -207,7 +207,7 @@ heteroHomotopy≃Homotopy {A = A} {B} {f} {g} = isoToEquiv isom
     subst (λ fib → PathP B (f x₀) (g (fib .fst))) (isContrSinglP A x₀ .snd (x₁ , p)) (k x₀)
   isom .rightInv k = funExt λ x₀ →
     cong (λ α → subst (λ fib → PathP B (f x₀) (g (fib .fst))) α (k x₀))
-      (isProp→isSet isPropSinglP (isContrSinglP A x₀ .fst) _
+      (isProp→isSet (isContr→isProp (isContrSinglP A x₀)) (isContrSinglP A x₀ .fst) _
         (isContrSinglP A x₀ .snd (isContrSinglP A x₀ .fst))
         refl)
     ∙ transportRefl (k x₀)

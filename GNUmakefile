@@ -1,10 +1,10 @@
-AGDA_EXEC=agda -W error
+AGDA_EXEC=agda
 RTS_OPTIONS=+RTS -H3G -RTS
 AGDA=$(AGDA_EXEC) $(RTS_OPTIONS)
 EVERYTHINGS=runhaskell ./Everythings.hs
 
 .PHONY : all
-all : check
+all : gen-everythings check
 
 .PHONY : test
 test: check-whitespace gen-and-check-everythings check-README check
@@ -38,21 +38,17 @@ gen-and-check-everythings:
 check-README:
 	$(EVERYTHINGS) check-README
 
-# typechecking and generating listings for all files imported in README
+# typechecking and generating listings for all files imported in in README
 
 .PHONY : check
-check: gen-everythings
-	$(AGDA) Cubical/README.agda
+check: $(wildcard Cubical/**/*.agda)
+	$(foreach f, $(shell $(EVERYTHINGS) get-imports-README), $(AGDA) "$(f)" && ) true
 	$(AGDA) Cubical/WithK.agda
 
-.PHONY : timings
-timings: clean gen-everythings
-	$(AGDA) -v profile.modules:10 Cubical/README.agda
-
-.PHONY : listings
+.PHONY: listings
 listings: $(wildcard Cubical/**/*.agda)
 	$(AGDA) -i. -isrc --html Cubical/README.agda -v0
 
 .PHONY : clean
-clean:
+clean :
 	find . -type f -name '*.agdai' -delete

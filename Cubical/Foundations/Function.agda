@@ -18,7 +18,14 @@ private
 idfun : (A : Type ℓ) → A → A
 idfun _ x = x
 
+id : A → A
+id x = x
+
+infixr 0 _$_
 infixr 9 _∘_
+
+_$_ : ((x : A) → B x) → (x : A) → B x
+f $ x = f x
 
 _∘_ : (g : {a : A} → (b : B a) → C a b) → (f : (a : A) → B a) → (a : A) → C a (f a)
 g ∘ f = λ x → g (f x)
@@ -53,11 +60,11 @@ case_return_of_ : ∀ {ℓ ℓ'} {A : Type ℓ} (x : A) (B : A → Type ℓ') �
 case x return P of f = f x
 {-# INLINE case_return_of_ #-}
 
+_on_ : {B : Type ℓ'} {C : Type ℓ''} → (B → B → C) → (A → B) → (A → A → C)
+_*_ on f = λ x y → f x * f y
+
 uncurry : ((x : A) → (y : B x) → C x y) → (p : Σ A B) → C (fst p) (snd p)
 uncurry f (x , y) = f x y
-
-curry : ((p : Σ A B) → C (fst p) (snd p)) → (x : A) → (y : B x) → C x y
-curry f x y = f (x , y)
 
 module _ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} where
   -- Notions of 'coherently constant' functions for low dimensions.

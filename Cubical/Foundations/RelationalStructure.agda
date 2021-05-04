@@ -266,4 +266,3 @@ structuredQER→structuredEquiv {ρ = ρ} θ (X , s) (Y , t) R r .rel =
               (λ y p → ∣ _ , ∣ _ , refl , E.fwd≡ToRel p ∣ , refl ∣)
               qy)
           qx))
-

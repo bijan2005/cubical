@@ -130,7 +130,7 @@ private
       buildTranspDesc fuel ℓ ℓ₀ A₀ >>= λ d₀ →
       R.returnTC (R.con (quote TranspDesc.maybe) (d₀ v∷ []))
 
-  autoTranspDesc' : R.Term → R.Term → R.TC Unit
+  autoTranspDesc' : R.Term → R.Term → R.TC ⊤
   autoTranspDesc' t hole =
     R.inferType hole >>= λ H →
     newMeta tLevel >>= λ ℓ →
@@ -195,7 +195,7 @@ buildDesc (suc fuel) ℓ ℓ' t =
     buildTranspDesc fuel ℓ ℓ' A₀ >>= λ d₀ →
     R.returnTC (R.con (quote Desc.transpDesc) (d₀ v∷ []))
 
-autoDesc' : R.Term → R.Term → R.TC Unit
+autoDesc' : R.Term → R.Term → R.TC ⊤
 autoDesc' t hole =
   R.inferType hole >>= λ H →
   newMeta tLevel >>= λ ℓ →
@@ -206,44 +206,44 @@ autoDesc' t hole =
 
 macro
   -- (Type ℓ → Type ℓ₁) → TranspDesc ℓ
-  autoTranspDesc : R.Term → R.Term → R.TC Unit
+  autoTranspDesc : R.Term → R.Term → R.TC ⊤
   autoTranspDesc = autoTranspDesc'
 
   -- (S : Type ℓ → Type ℓ₁) → EquivAction (AutoStructure S)
-  autoEquivAction : R.Term → R.Term → R.TC Unit
+  autoEquivAction : R.Term → R.Term → R.TC ⊤
   autoEquivAction t hole =
     newMeta (tTranspDesc R.unknown R.unknown) >>= λ d →
     R.unify hole (R.def (quote transpMacroAction) [ varg d ]) >>
     autoTranspDesc' t d
 
   -- (S : Type ℓ → Type ℓ₁) → TransportStr (autoEquivAction S)
-  autoTransportStr : R.Term → R.Term → R.TC Unit
+  autoTransportStr : R.Term → R.Term → R.TC ⊤
   autoTransportStr t hole =
     newMeta (tTranspDesc R.unknown R.unknown) >>= λ d →
     R.unify hole (R.def (quote transpMacroTransportStr) [ varg d ]) >>
     autoTranspDesc' t d
 
   -- (S : Type ℓ → Type ℓ₁) → Desc ℓ
-  autoDesc : R.Term → R.Term → R.TC Unit
+  autoDesc : R.Term → R.Term → R.TC ⊤
   autoDesc = autoDesc'
 
   -- (S : Type ℓ → Type ℓ₁) → (Type ℓ → Type ℓ₁)
   -- Removes Transp[_] annotations
-  AutoStructure : R.Term → R.Term → R.TC Unit
+  AutoStructure : R.Term → R.Term → R.TC ⊤
   AutoStructure t hole =
     newMeta (tDesc R.unknown R.unknown R.unknown) >>= λ d →
     R.unify hole (R.def (quote MacroStructure) [ varg d ]) >>
     autoDesc' t d
 
   -- (S : Type ℓ → Type ℓ₁) → StrEquiv (AutoStructure S) _
-  AutoEquivStr : R.Term → R.Term → R.TC Unit
+  AutoEquivStr : R.Term → R.Term → R.TC ⊤
   AutoEquivStr t hole =
     newMeta (tDesc R.unknown R.unknown R.unknown) >>= λ d →
     R.unify hole (R.def (quote MacroEquivStr) [ varg d ]) >>
     autoDesc' t d
 
   -- (S : Type ℓ → Type ℓ₁) → UnivalentStr (AutoStructure S) (AutoEquivStr S)
-  autoUnivalentStr : R.Term → R.Term → R.TC Unit
+  autoUnivalentStr : R.Term → R.Term → R.TC ⊤
   autoUnivalentStr t hole =
     newMeta (tDesc R.unknown R.unknown R.unknown) >>= λ d →
     R.unify hole (R.def (quote MacroUnivalentStr) [ varg d ]) >>

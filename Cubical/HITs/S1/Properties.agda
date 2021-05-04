@@ -26,9 +26,9 @@ isGroupoidS¹ s t =
           (isConnectedS¹ t)))
     (isConnectedS¹ s)
 
-IsoFunSpaceS¹ : ∀ {ℓ} {A : Type ℓ} → Iso (S¹ → A) (Σ[ x ∈ A ] x ≡ x)
-Iso.fun IsoFunSpaceS¹ f = (f base) , (cong f loop)
-Iso.inv IsoFunSpaceS¹ (x , p) base = x
-Iso.inv IsoFunSpaceS¹ (x , p) (loop i) = p i
-Iso.rightInv IsoFunSpaceS¹ (x , p) = refl
-Iso.leftInv IsoFunSpaceS¹ f = funExt λ {base → refl ; (loop i) → refl}
+
+toPropElim : ∀ {ℓ} {B : S¹ → Type ℓ} → ((s : S¹) → isProp (B s)) → B base → (s : S¹) → B s
+toPropElim {B = B} isprop b base = b
+toPropElim {B = B} isprop b (loop i) = hcomp (λ k → λ {(i = i0) → b
+                                                     ; (i = i1) → isprop base (subst B (loop) b) b k})
+                                      (transp (λ j → B (loop (i ∧ j))) (~ i) b)

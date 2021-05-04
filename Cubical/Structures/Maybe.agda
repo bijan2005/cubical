@@ -23,7 +23,7 @@ private
     ℓ ℓ₁ ℓ₁' : Level
 
 MaybeRel : {A B : Type ℓ} (R : A → B → Type ℓ₁) → Maybe A → Maybe B → Type ℓ₁
-MaybeRel R nothing nothing = Lift Unit
+MaybeRel R nothing nothing = Lift ⊤
 MaybeRel R nothing (just _) = Lift ⊥
 MaybeRel R (just _) nothing = Lift ⊥
 MaybeRel R (just x) (just y) = R x y

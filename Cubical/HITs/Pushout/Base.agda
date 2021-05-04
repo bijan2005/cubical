@@ -15,12 +15,6 @@ data Pushout {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''}
   inr : C → Pushout f g
   push : (a : A) → inl (f a) ≡ inr (g a)
 
--- cofiber (equivalent to Cone in Cubical.HITs.MappingCones.Base)
-cofib : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (f : A → B) → Type _
-cofib f = Pushout (λ _ → tt) f
-
-cfcod : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (f : A → B) → B → cofib f
-cfcod f = inr
 
 -- Suspension defined as a pushout
 
@@ -49,15 +43,8 @@ PushoutSusp→Susp→PushoutSusp (inl _) = refl
 PushoutSusp→Susp→PushoutSusp (inr _) = refl
 PushoutSusp→Susp→PushoutSusp (push _ _) = refl
 
-PushoutSuspIsoSusp : ∀ {ℓ} {A : Type ℓ} → Iso (PushoutSusp A) (Susp A)
-Iso.fun PushoutSuspIsoSusp = PushoutSusp→Susp
-Iso.inv PushoutSuspIsoSusp = Susp→PushoutSusp
-Iso.rightInv PushoutSuspIsoSusp = Susp→PushoutSusp→Susp
-Iso.leftInv PushoutSuspIsoSusp = PushoutSusp→Susp→PushoutSusp
-
-
 PushoutSusp≃Susp : ∀ {ℓ} {A : Type ℓ} → PushoutSusp A ≃ Susp A
-PushoutSusp≃Susp = isoToEquiv PushoutSuspIsoSusp
+PushoutSusp≃Susp = isoToEquiv (iso PushoutSusp→Susp Susp→PushoutSusp Susp→PushoutSusp→Susp PushoutSusp→Susp→PushoutSusp)
 
 PushoutSusp≡Susp : ∀ {ℓ} {A : Type ℓ} → PushoutSusp A ≡ Susp A
-PushoutSusp≡Susp = isoToPath PushoutSuspIsoSusp
+PushoutSusp≡Susp = isoToPath (iso PushoutSusp→Susp Susp→PushoutSusp Susp→PushoutSusp→Susp PushoutSusp→Susp→PushoutSusp)

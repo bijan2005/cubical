@@ -13,6 +13,7 @@ open import Cubical.Data.Unit
 open import Cubical.Data.Nat
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Sum
+open import Cubical.Relation.Nullary using (Dec; yes; no)
 
 open import Cubical.Data.Maybe.Base
 
@@ -23,7 +24,7 @@ map-Maybe-id (just _) = refl
 -- Path space of Maybe type
 module MaybePath {ℓ} {A : Type ℓ} where
   Cover : Maybe A → Maybe A → Type ℓ
-  Cover nothing  nothing   = Lift Unit
+  Cover nothing  nothing   = Lift ⊤
   Cover nothing  (just _)  = Lift ⊥
   Cover (just _) nothing   = Lift ⊥
   Cover (just a) (just a') = a ≡ a'
@@ -67,7 +68,7 @@ module MaybePath {ℓ} {A : Type ℓ} where
   isOfHLevelCover : (n : HLevel)
     → isOfHLevel (suc (suc n)) A
     → ∀ c c' → isOfHLevel (suc n) (Cover c c')
-  isOfHLevelCover n p nothing  nothing   = isOfHLevelLift (suc n) (isOfHLevelUnit (suc n))
+  isOfHLevelCover n p nothing  nothing   = isOfHLevelLift (suc n) (isOfHLevel⊤ (suc n))
   isOfHLevelCover n p nothing  (just a') = isOfHLevelLift (suc n) (isProp→isOfHLevelSuc n isProp⊥)
   isOfHLevelCover n p (just a) nothing   = isOfHLevelLift (suc n) (isProp→isOfHLevelSuc n isProp⊥)
   isOfHLevelCover n p (just a) (just a') = p a a'
@@ -91,6 +92,10 @@ fromJust-def : A → Maybe A → A
 fromJust-def a nothing = a
 fromJust-def _ (just a) = a
 
+Dec→Maybe : Dec A → Maybe A
+Dec→Maybe (yes x) = just x
+Dec→Maybe (no _) = nothing
+
 just-inj : (x y : A) → just x ≡ just y → x ≡ y
 just-inj x _ eq = cong (fromJust-def x) eq
 
@@ -105,12 +110,12 @@ isEmbedding-just  w z = MaybePath.Cover≃Path (just w) (just z) .snd
 
 isProp-x≡nothing : (x : Maybe A) → isProp (x ≡ nothing)
 isProp-x≡nothing nothing x w =
-  subst isProp (MaybePath.Cover≡Path nothing nothing) (isOfHLevelLift 1 isPropUnit) x w
+  subst isProp (MaybePath.Cover≡Path nothing nothing) (isOfHLevelLift 1 isProp⊤) x w
 isProp-x≡nothing (just _) p _ = ⊥.rec (¬just≡nothing p)
 
 isProp-nothing≡x : (x : Maybe A) → isProp (nothing ≡ x)
 isProp-nothing≡x nothing x w =
-  subst isProp (MaybePath.Cover≡Path nothing nothing) (isOfHLevelLift 1 isPropUnit) x w
+  subst isProp (MaybePath.Cover≡Path nothing nothing) (isOfHLevelLift 1 isProp⊤) x w
 isProp-nothing≡x (just _) p _ = ⊥.rec (¬nothing≡just p)
 
 isContr-nothing≡nothing : isContr (nothing {A = A} ≡ nothing)
@@ -124,25 +129,25 @@ discreteMaybe eqA (just a) (just a') with eqA a a'
 ... | yes p = yes (cong just p)
 ... | no ¬p = no (λ p → ¬p (just-inj _ _ p))
 
-module SumUnit where
-  Maybe→SumUnit : Maybe A → Unit ⊎ A
-  Maybe→SumUnit nothing  = inl tt
-  Maybe→SumUnit (just a) = inr a
+module Sum⊤ where
+  Maybe→Sum⊤ : Maybe A → ⊤ ⊎ A
+  Maybe→Sum⊤ nothing  = inl tt
+  Maybe→Sum⊤ (just a) = inr a
 
-  SumUnit→Maybe : Unit ⊎ A → Maybe A
-  SumUnit→Maybe (inl _) = nothing
-  SumUnit→Maybe (inr a) = just a
+  Sum⊤→Maybe : ⊤ ⊎ A → Maybe A
+  Sum⊤→Maybe (inl _) = nothing
+  Sum⊤→Maybe (inr a) = just a
 
-  Maybe→SumUnit→Maybe : (x : Maybe A) → SumUnit→Maybe (Maybe→SumUnit x) ≡ x
-  Maybe→SumUnit→Maybe nothing  = refl
-  Maybe→SumUnit→Maybe (just _) = refl
+  Maybe→Sum⊤→Maybe : (x : Maybe A) → Sum⊤→Maybe (Maybe→Sum⊤ x) ≡ x
+  Maybe→Sum⊤→Maybe nothing  = refl
+  Maybe→Sum⊤→Maybe (just _) = refl
 
-  SumUnit→Maybe→SumUnit : (x : Unit ⊎ A) → Maybe→SumUnit (SumUnit→Maybe x) ≡ x
-  SumUnit→Maybe→SumUnit (inl _) = refl
-  SumUnit→Maybe→SumUnit (inr _) = refl
+  Sum⊤→Maybe→Sum⊤ : (x : ⊤ ⊎ A) → Maybe→Sum⊤ (Sum⊤→Maybe x) ≡ x
+  Sum⊤→Maybe→Sum⊤ (inl _) = refl
+  Sum⊤→Maybe→Sum⊤ (inr _) = refl
 
-Maybe≡SumUnit : Maybe A ≡ Unit ⊎ A
-Maybe≡SumUnit = isoToPath (iso SumUnit.Maybe→SumUnit SumUnit.SumUnit→Maybe SumUnit.SumUnit→Maybe→SumUnit SumUnit.Maybe→SumUnit→Maybe)
+Maybe≡Sum⊤ : Maybe A ≡ ⊤ ⊎ A
+Maybe≡Sum⊤ = isoToPath (iso Sum⊤.Maybe→Sum⊤ Sum⊤.Sum⊤→Maybe Sum⊤.Sum⊤→Maybe→Sum⊤ Sum⊤.Maybe→Sum⊤→Maybe)
 
 congMaybeEquiv : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'}
   → A ≃ B → Maybe A ≃ Maybe B

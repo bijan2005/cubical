@@ -58,12 +58,3 @@ import Cubical.ZCohomology.Everything
 
 -- Algebra library (in development)
 import Cubical.Algebra.Everything
-
--- Various talks
-import Cubical.Talks.Everything
-
--- Reflection
-import Cubical.Reflection.Everything
-
--- Displayed univalent graphs
-import Cubical.Displayed.Everything

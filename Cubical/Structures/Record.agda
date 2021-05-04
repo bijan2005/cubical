@@ -63,7 +63,7 @@ module _ {ℓ ℓ₁ ℓ₁'} where
     GatherFields : {R : Type ℓ → Type ℓ₁} {ι : StrEquiv R ℓ₁'}
       (dat : AutoFields R ι)
       → Type ℓ → Type (GatherFieldsLevel dat)
-    GatherFields fields: X = Unit
+    GatherFields fields: X = ⊤
     GatherFields (_data[_∣_] fs {S = S} _ _) X = GatherFields fs X × S X
     GatherFields (_prop[_∣_] fs {P = P} _ _) X =
       Σ[ s ∈ GatherFields fs X ] (P X s)
@@ -411,13 +411,13 @@ module _ (spec : InternalSpec ℕ) where
       (R.unknown v∷ R.unknown v∷ fwd v∷ bwd v∷ fwdBwd v∷ bwdFwd v∷ [])
 
 macro
-  autoFieldEquiv : R.Term → R.Term → R.Term → R.Term → R.TC Unit
+  autoFieldEquiv : R.Term → R.Term → R.Term → R.Term → R.TC ⊤
   autoFieldEquiv spec A B hole =
     (R.reduce spec >>= parseFieldSpec) >>= λ (ℓ , ℓ₂ , S , f) →
     buildDesc FUEL ℓ ℓ₂ S >>= λ d →
     R.unify hole (R.def (quote M.MacroEquivStr) (d v∷ tStrMap A f v∷ tStrMap B f v∷ []))
 
-  autoUnivalentRecord : R.Term → R.Term → R.TC Unit
+  autoUnivalentRecord : R.Term → R.Term → R.TC ⊤
   autoUnivalentRecord t hole =
     (R.reduce t >>= parseSpec) >>= λ spec →
     -- R.typeError (R.strErr "WOW: " ∷ R.termErr (main spec) ∷ [])

@@ -3,26 +3,20 @@ module Cubical.Relation.Nullary.Base where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Function
-open import Cubical.Functions.Fixpoint
 
 open import Cubical.Data.Empty as ⊥
 open import Cubical.HITs.PropositionalTruncation.Base
+open import Cubical.Functions.Fixpoint
+
+open import Cubical.Relation.Nullary.Decidable public
 
 private
   variable
     ℓ  : Level
     A  : Type ℓ
 
--- Negation
-infix 3 ¬_
-
-¬_ : Type ℓ → Type ℓ
-¬ A = A → ⊥
-
--- Decidable types (inspired by standard library)
-data Dec (P : Type ℓ) : Type ℓ where
-  yes : ( p :   P) → Dec P
-  no  : (¬p : ¬ P) → Dec P
+toWitness : {Q : Dec A} → IsYes Q → A
+toWitness {Q = yes x} isYes = x
 
 NonEmpty : Type ℓ → Type ℓ
 NonEmpty A = ¬ ¬ A
@@ -56,11 +50,8 @@ Separated = onAllPaths Stable
 HSeparated : Type ℓ → Type ℓ
 HSeparated = onAllPaths SplitSupport
 
-Collapsible≡ : Type ℓ → Type ℓ
-Collapsible≡ = onAllPaths Collapsible
-
 PStable≡ : Type ℓ → Type ℓ
 PStable≡ = onAllPaths PStable
 
-Discrete : Type ℓ → Type ℓ
-Discrete = onAllPaths Dec
+Collapsible≡ : Type ℓ → Type ℓ
+Collapsible≡ = onAllPaths Collapsible

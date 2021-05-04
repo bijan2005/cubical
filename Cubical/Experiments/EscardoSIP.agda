@@ -78,9 +78,9 @@ NatΣ τ (x , a) = (x , τ x a)
    g : Y → X
    g = isHAEquiv.g isHAEquivf
    ε : (x : X) → (g (f x)) ≡ x
-   ε = isHAEquiv.linv isHAEquivf
+   ε = isHAEquiv.sec isHAEquivf
    η : (y : Y) → f (g y) ≡ y
-   η = isHAEquiv.rinv isHAEquivf
+   η = isHAEquiv.ret isHAEquivf
    τ :  (x : X) → cong f (ε x) ≡ η (f x)
    τ = isHAEquiv.com isHAEquivf
 

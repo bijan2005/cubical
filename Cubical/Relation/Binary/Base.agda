@@ -4,139 +4,83 @@ module Cubical.Relation.Binary.Base where
 open import Cubical.Core.Everything
 
 open import Cubical.Foundations.Prelude
-open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Isomorphism
-open import Cubical.Foundations.Equiv
-open import Cubical.Foundations.Equiv.Fiberwise
-open import Cubical.Data.Sigma
+open import Cubical.Foundations.Function using (_on_)
+open import Cubical.Data.Sigma.Base
 open import Cubical.HITs.SetQuotients.Base
 open import Cubical.HITs.PropositionalTruncation.Base
 
 private
   variable
-    ℓA ℓ≅A ℓA' ℓ≅A' : Level
+    a b c ℓ ℓ' ℓ'' ℓ''' : Level
+    A : Type a
+    B : Type b
+    C : Type c
 
-Rel : ∀ {ℓ} (A B : Type ℓ) (ℓ' : Level) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
-Rel A B ℓ' = A → B → Type ℓ'
+REL : Type a → Type b → (ℓ : Level) → Type _
+REL A B ℓ = A → B → Type ℓ
 
-PropRel : ∀ {ℓ} (A B : Type ℓ) (ℓ' : Level) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
-PropRel A B ℓ' = Σ[ R ∈ Rel A B ℓ' ] ∀ a b → isProp (R a b)
+Rel : Type a → (ℓ : Level) → Type _
+Rel A ℓ = REL A A ℓ
 
-idPropRel : ∀ {ℓ} (A : Type ℓ) → PropRel A A ℓ
+isPropValued : {A : Type a} {B : Type b} → REL A B ℓ → Type _
+isPropValued R = ∀ a b → isProp (R a b)
+
+PropREL : Type a → Type b → (ℓ : Level) → Type _
+PropREL A B ℓ = Σ (REL A B ℓ) isPropValued
+
+PropRel : Type a → (ℓ : Level) → Type _
+PropRel A ℓ = PropREL A A ℓ
+
+⟨_⟩ᴿ : PropREL A B ℓ → REL A B ℓ
+⟨_⟩ᴿ = fst
+
+⟨_⟩ᵖ : (R : PropREL A B ℓ) → isPropValued ⟨ R ⟩ᴿ
+⟨_⟩ᵖ = snd
+
+idPropRel : (A : Type ℓ) → PropRel A ℓ
 idPropRel A .fst a a' = ∥ a ≡ a' ∥
 idPropRel A .snd _ _ = squash
 
-invPropRel : ∀ {ℓ ℓ'} {A B : Type ℓ}
-  → PropRel A B ℓ' → PropRel B A ℓ'
+invPropRel : ∀ {A B : Type ℓ}
+  → PropREL A B ℓ' → PropREL B A ℓ'
 invPropRel R .fst b a = R .fst a b
 invPropRel R .snd b a = R .snd a b
 
-compPropRel : ∀ {ℓ ℓ' ℓ''} {A B C : Type ℓ}
-  → PropRel A B ℓ' → PropRel B C ℓ'' → PropRel A C (ℓ-max ℓ (ℓ-max ℓ' ℓ''))
+compPropRel : ∀ {A B C : Type ℓ}
+  → PropREL A B ℓ' → PropREL B C ℓ'' → PropREL A C _
 compPropRel R S .fst a c = ∥ Σ[ b ∈ _ ] (R .fst a b × S .fst b c) ∥
 compPropRel R S .snd _ _ = squash
 
-graphRel : ∀ {ℓ} {A B : Type ℓ} → (A → B) → Rel A B ℓ
+graphRel : ∀ {A B : Type ℓ} → (A → B) → REL A B ℓ
 graphRel f a b = f a ≡ b
 
-module BinaryRelation {ℓ ℓ' : Level} {A : Type ℓ} (R : Rel A A ℓ') where
-  isRefl : Type (ℓ-max ℓ ℓ')
-  isRefl = (a : A) → R a a
+infix 7 _⇒_ _⇔_ _=[_]⇒_
 
-  isSym : Type (ℓ-max ℓ ℓ')
-  isSym = (a b : A) → R a b → R b a
+-- Implication/containment - could also be written _⊆_.
+-- and corresponding notion of equivalence
 
-  isTrans : Type (ℓ-max ℓ ℓ')
-  isTrans = (a b c : A)  → R a b → R b c → R a c
+_⇒_ : REL A B ℓ → REL A B ℓ' → Type _
+P ⇒ Q = ∀ {x y} → P x y → Q x y
 
-  record isEquivRel : Type (ℓ-max ℓ ℓ') where
-    constructor equivRel
-    field
-      reflexive : isRefl
-      symmetric : isSym
-      transitive : isTrans
+_⇔_ : REL A B ℓ → REL A B ℓ' → Type _
+P ⇔ Q = P ⇒ Q × Q ⇒ P
 
-  isPropValued : Type (ℓ-max ℓ ℓ')
-  isPropValued = (a b : A) → isProp (R a b)
+-- Generalised implication - if P ≡ Q it can be read as "f preserves P".
 
-  isEffective : Type (ℓ-max ℓ ℓ')
-  isEffective =
-    (a b : A) → isEquiv (eq/ {R = R} a b)
+_=[_]⇒_ : Rel A ℓ → (A → B) → Rel B ℓ' → Type _
+P =[ f ]⇒ Q = P ⇒ (Q on f)
 
+-- A synonym for _=[_]⇒_.
 
-  impliesIdentity : Type _
-  impliesIdentity = {a a' : A} → (R a a') → (a ≡ a')
+_Preserves_⟶_ : (A → B) → Rel A ℓ → Rel B ℓ' → Type _
+f Preserves P ⟶ Q = P =[ f ]⇒ Q
 
-  -- the total space corresponding to the binary relation w.r.t. a
-  relSinglAt : (a : A) → Type (ℓ-max ℓ ℓ')
-  relSinglAt a = Σ[ a' ∈ A ] (R a a')
+-- An endomorphic variant of _Preserves_⟶_.
 
-  -- the statement that the total space is contractible at any a
-  contrRelSingl : Type (ℓ-max ℓ ℓ')
-  contrRelSingl = (a : A) → isContr (relSinglAt a)
+_Preserves_ : (A → A) → Rel A ℓ → Type _
+f Preserves P = f Preserves P ⟶ P
 
-  isUnivalent : Type (ℓ-max ℓ ℓ')
-  isUnivalent = (a a' : A) → (R a a') ≃ (a ≡ a')
+-- A binary variant of _Preserves_⟶_.
 
-  contrRelSingl→isUnivalent : isRefl → contrRelSingl → isUnivalent
-  contrRelSingl→isUnivalent ρ c a a' = isoToEquiv i
-    where
-      h : isProp (relSinglAt a)
-      h = isContr→isProp (c a)
-      aρa : relSinglAt a
-      aρa = a , ρ a
-      Q : (y : A) → a ≡ y → _
-      Q y _ = R a y
-      i : Iso (R a a') (a ≡ a')
-      Iso.fun i r = cong fst (h aρa (a' , r))
-      Iso.inv i = J Q (ρ a)
-      Iso.rightInv i = J (λ y p → cong fst (h aρa (y , J Q (ρ a) p)) ≡ p)
-                         (J (λ q _ → cong fst (h aρa (a , q)) ≡ refl)
-                           (J (λ α _ → cong fst α ≡ refl) refl
-                             (isContr→isProp (isProp→isContrPath h aρa aρa) refl (h aρa aρa)))
-                           (sym (JRefl Q (ρ a))))
-      Iso.leftInv i r = J (λ w β → J Q (ρ a) (cong fst β) ≡ snd w)
-                          (JRefl Q (ρ a)) (h aρa (a' , r))
-
-  isUnivalent→contrRelSingl : isUnivalent → contrRelSingl
-  isUnivalent→contrRelSingl u a = q
-    where
-      abstract
-        f : (x : A) → a ≡ x → R a x
-        f x p = invEq (u a x) p
-
-        t : singl a → relSinglAt a
-        t (x , p) = x , f x p
-
-        q : isContr (relSinglAt a)
-        q = isOfHLevelRespectEquiv 0 (t , totalEquiv _ _ f λ x → invEquiv (u a x) .snd)
-                                   (isContrSingl a)
-
-EquivRel : ∀ {ℓ} (A : Type ℓ) (ℓ' : Level) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
-EquivRel A ℓ' = Σ[ R ∈ Rel A A ℓ' ] BinaryRelation.isEquivRel R
-
-EquivPropRel : ∀ {ℓ} (A : Type ℓ) (ℓ' : Level) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
-EquivPropRel A ℓ' = Σ[ R ∈ PropRel A A ℓ' ] BinaryRelation.isEquivRel (R .fst)
-
-record RelIso {A : Type ℓA} (_≅_ : Rel A A ℓ≅A)
-              {A' : Type ℓA'} (_≅'_ : Rel A' A' ℓ≅A') : Type (ℓ-max (ℓ-max ℓA ℓA') (ℓ-max ℓ≅A ℓ≅A')) where
-  constructor reliso
-  field
-    fun : A → A'
-    inv : A' → A
-    rightInv : (a' : A') → fun (inv a') ≅' a'
-    leftInv : (a : A) → inv (fun a) ≅ a
-
-open BinaryRelation
-
-RelIso→Iso : {A : Type ℓA} {A' : Type ℓA'}
-             (_≅_ : Rel A A ℓ≅A) (_≅'_ : Rel A' A' ℓ≅A')
-             (uni : impliesIdentity _≅_) (uni' : impliesIdentity _≅'_)
-             (f : RelIso _≅_ _≅'_)
-             → Iso A A'
-Iso.fun (RelIso→Iso _ _ _ _ f) = RelIso.fun f
-Iso.inv (RelIso→Iso _ _ _ _ f) = RelIso.inv f
-Iso.rightInv (RelIso→Iso _ _ uni uni' f) a'
-  = uni' (RelIso.rightInv f a')
-Iso.leftInv (RelIso→Iso _ _ uni uni' f) a
-  = uni (RelIso.leftInv f a)
+_Preserves₂_⟶_⟶_ : (A → B → C) → Rel A ℓ → Rel B ℓ' → Rel C ℓ'' → Type _
+_∙_ Preserves₂ P ⟶ Q ⟶ R = ∀ {x y u v} → P x y → Q u v → R (x ∙ u) (y ∙ v)

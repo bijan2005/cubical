@@ -42,4 +42,3 @@ vlam : String → R.Term → R.Term
 vlam str t = R.lam R.visible (R.abs str t)
 
 newMeta = R.checkType R.unknown
-

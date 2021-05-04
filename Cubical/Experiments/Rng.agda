@@ -15,15 +15,15 @@ open import Cubical.Data.Sigma
 open import Cubical.Structures.Axioms
 open import Cubical.Structures.Auto
 open import Cubical.Structures.Macro
-open import Cubical.Algebra.Semigroup
-open import Cubical.Algebra.AbGroup
+open import Cubical.Structures.Semigroup hiding (⟨_⟩)
+open import Cubical.Structures.AbGroup
 
 private
   variable
     ℓ ℓ' : Level
 
 module _ {ℓ} where
-  rawRngDesc : Desc ℓ ℓ ℓ
+  rawRngDesc : Desc ℓ
   rawRngDesc = autoDesc (λ (X : Type ℓ) → (X → X → X) × (X → X → X))
 
   open Macro ℓ rawRngDesc public renaming

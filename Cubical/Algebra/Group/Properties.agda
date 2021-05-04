@@ -2,77 +2,267 @@
 
 module Cubical.Algebra.Group.Properties where
 
+open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
+open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Structure
-open import Cubical.Data.Sigma
-open import Cubical.Algebra.Semigroup
-open import Cubical.Algebra.Monoid
-open import Cubical.Algebra.Group.Base
+open import Cubical.Foundations.Function using (flip)
+
+open import Cubical.Data.Nat hiding (_+_; _*_)
+open import Cubical.Data.NatPlusOne using (ℕ₊₁→ℕ)
+open import Cubical.Data.Int
+open import Cubical.Data.Sigma hiding (_×_)
+open import Cubical.Data.Prod
+
+open import Cubical.Algebra
+open import Cubical.Algebra.Properties
+open import Cubical.Algebra.Group.Morphism
+
+open import Cubical.Algebra.Monoid.Properties using (isPropIsMonoid; module MonoidLemmas)
+
+open import Cubical.Relation.Binary
+open import Cubical.Relation.Binary.Reasoning.Equality
+
+open import Cubical.Algebra.Group.MorphismProperties public
+  using (GroupPath; uaGroup; carac-uaGroup; Group≡; caracGroup≡)
 
 private
   variable
-    ℓ ℓ' ℓ'' : Level
+    ℓ ℓ′ ℓ′′ : Level
 
-module GroupLemmas (G : Group {ℓ}) where
-  open GroupStr (snd G)
-  abstract
-    simplL : (a : ⟨ G ⟩) {b c : ⟨ G ⟩} → a + b ≡ a + c → b ≡ c
-    simplL a {b} {c} p =
-       b
-        ≡⟨ sym (lid b) ∙ cong (_+ b) (sym (invl a)) ∙ sym (assoc _ _ _) ⟩
-      - a + (a + b)
-        ≡⟨ cong (- a +_) p ⟩
-      - a + (a + c)
-        ≡⟨ assoc _ _ _ ∙ cong (_+ c) (invl a) ∙ lid c ⟩
-      c ∎
+isPropIsGroup : ∀ {G : Type ℓ} {_•_ ε _⁻¹} → isProp (IsGroup G _•_ ε _⁻¹)
+isPropIsGroup {G = G} {_•_} {ε} {_⁻¹} (isgroup aMon aInv) (isgroup bMon bInv) =
+  cong₂ isgroup (isPropIsMonoid aMon bMon) (isPropInverse (IsMonoid.is-set aMon) _•_ _⁻¹ ε aInv bInv)
 
-    simplR : {a b : ⟨ G ⟩} (c : ⟨ G ⟩) → a + c ≡ b + c → a ≡ b
-    simplR {a} {b} c p =
-      a
-        ≡⟨ sym (rid a) ∙ cong (a +_) (sym (invr c)) ∙ assoc _ _ _ ⟩
-      (a + c) - c
-        ≡⟨ cong (_- c) p ⟩
-      (b + c) - c
-        ≡⟨ sym (assoc _ _ _) ∙ cong (b +_) (invr c) ∙ rid b ⟩
-      b ∎
+module GroupLemmas (G : Group ℓ) where
+  open Group G
 
-    invInvo : (a : ⟨ G ⟩) → - (- a) ≡ a
-    invInvo a = simplL (- a) (invr (- a) ∙ sym (invl a))
+  open MonoidLemmas monoid public using (ε-comm) renaming (_^′_ to _^′′_; ^semi≡^ to ^semi≡^mon)
 
-    invId : - 0g ≡ 0g
-    invId = simplL 0g (invr 0g ∙ sym (lid 0g))
+  invInvo : Involutive _⁻¹
+  invInvo a = cancelʳ (a ⁻¹) (inverseˡ (a ⁻¹) ∙ sym (inverseʳ a))
 
-    idUniqueL : {e : ⟨ G ⟩} (x : ⟨ G ⟩) → e + x ≡ x → e ≡ 0g
-    idUniqueL {e} x p = simplR x (p ∙ sym (lid _))
+  invId : ε ⁻¹ ≡ ε
+  invId = cancelʳ ε (inverseˡ ε ∙ sym (identityʳ ε))
 
-    idUniqueR : (x : ⟨ G ⟩) {e : ⟨ G ⟩} → x + e ≡ x → e ≡ 0g
-    idUniqueR x {e} p = simplL x (p ∙ sym (rid _))
+  invDistr : Homomorphic₂ _⁻¹ _•_ (flip _•_)
+  invDistr x y = sym (inv-uniqueˡ _ _ (
+    (x • y) • (y ⁻¹ • x ⁻¹)
+      ≡˘⟨ assoc (x • y) (y ⁻¹) (x ⁻¹) ⟩
+    x • y / y / x
+      ≡⟨ cong (_/ x) (assoc _ _ _ ∙ cong (x •_) (inverseʳ y)) ⟩
+    x • ε / x
+      ≡⟨ cong (_/ x) (identityʳ x) ∙ inverseʳ x ⟩
+    ε ∎))
 
-    invUniqueL : {g h : ⟨ G ⟩} → g + h ≡ 0g → g ≡ - h
-    invUniqueL {g} {h} p = simplR h (p ∙ sym (invl h))
+  inv-comm : ∀ x → x • x ⁻¹ ≡ x ⁻¹ • x
+  inv-comm x = inverseʳ x ∙ sym (inverseˡ x)
 
-    invUniqueR : {g h : ⟨ G ⟩} → g + h ≡ 0g → h ≡ - g
-    invUniqueR {g} {h} p = simplL g (p ∙ sym (invr g))
 
-    invDistr : (a b : ⟨ G ⟩) → - (a + b) ≡ - b - a
-    invDistr a b = sym (invUniqueR γ) where
-      γ : (a + b) + (- b - a) ≡ 0g
-      γ = (a + b) + (- b - a)
-            ≡⟨ sym (assoc _ _ _) ⟩
-          a + b + (- b) + (- a)
-            ≡⟨ cong (a +_) (assoc _ _ _ ∙ cong (_+ (- a)) (invr b)) ⟩
-          a + (0g - a)
-            ≡⟨ cong (a +_) (lid (- a)) ∙ invr a ⟩
-          0g ∎
+  isEquiv-•ˡ : ∀ x → isEquiv (x •_)
+  isEquiv-•ˡ x = isoToIsEquiv (iso _ (x ⁻¹ •_) section-• retract-•)
+    where
+      section-• : section (x •_) (x ⁻¹ •_)
+      section-• y =
+        x • (x ⁻¹ • y) ≡˘⟨ assoc x (x ⁻¹) y ⟩
+        x • x ⁻¹ • y   ≡⟨ cong (_• y) (inverseʳ x) ⟩
+        ε • y          ≡⟨ identityˡ y ⟩
+        y              ∎
 
-isPropIsGroup : {G : Type ℓ} (0g : G) (_+_ : G → G → G) (-_ : G → G)
-             → isProp (IsGroup 0g _+_ -_)
-IsGroup.isMonoid (isPropIsGroup 0g _+_ -_ g1 g2 i) = isPropIsMonoid _ _ (IsGroup.isMonoid g1) (IsGroup.isMonoid g2) i
-IsGroup.inverse (isPropIsGroup 0g _+_ -_ g1 g2 i) = isPropInv (IsGroup.inverse g1) (IsGroup.inverse g2) i
-  where
-  isSetG : isSet _
-  isSetG = IsSemigroup.is-set (IsMonoid.isSemigroup (IsGroup.isMonoid g1))
+      retract-• : retract (x •_) (x ⁻¹ •_)
+      retract-• y =
+        x ⁻¹ • (x • y) ≡˘⟨ assoc (x ⁻¹) x y ⟩
+        x ⁻¹ • x • y   ≡⟨ cong (_• y) (inverseˡ x) ⟩
+        ε • y          ≡⟨ identityˡ y ⟩
+        y              ∎
 
-  isPropInv : isProp ((x : _) → ((x + (- x)) ≡ 0g) × (((- x) + x) ≡ 0g))
-  isPropInv = isPropΠ λ _ → isProp× (isSetG _ _) (isSetG _ _)
+  isEquiv-•ʳ : ∀ x → isEquiv (_• x)
+  isEquiv-•ʳ x = isoToIsEquiv (iso _ (_• x ⁻¹) section-• retract-•)
+    where
+      section-• : section (_• x) (_• x ⁻¹)
+      section-• y =
+        y • x ⁻¹ • x   ≡⟨ assoc y (x ⁻¹) x ⟩
+        y • (x ⁻¹ • x) ≡⟨ cong (y •_) (inverseˡ x) ⟩
+        y • ε          ≡⟨ identityʳ y ⟩
+        y              ∎
+
+      retract-• : retract (_• x) (_• x ⁻¹)
+      retract-• y =
+        y • x • x ⁻¹   ≡⟨ assoc y x (x ⁻¹) ⟩
+        y • (x • x ⁻¹) ≡⟨ cong (y •_) (inverseʳ x) ⟩
+        y • ε          ≡⟨ identityʳ y ⟩
+        y              ∎
+
+  inv-≡ʳ : ∀ {x y} → x • y ⁻¹ ≡ ε → x ≡ y
+  inv-≡ʳ p = inv-uniqueʳ _ _ p ∙ invInvo _
+
+  inv-≡ˡ : ∀ {x y} → x ⁻¹ • y ≡ ε → x ≡ y
+  inv-≡ˡ p = sym (invInvo _) ∙ sym (inv-uniqueˡ _ _ p)
+
+  ≡-invʳ : ∀ {x y} → x ≡ y → x • y ⁻¹ ≡ ε
+  ≡-invʳ p = subst (λ y → _ • y ⁻¹ ≡ ε) p (inverseʳ _)
+
+  ≡-invˡ : ∀ {x y} → x ≡ y → x ⁻¹ • y ≡ ε
+  ≡-invˡ p = subst (λ y → _ • y ≡ ε) p (inverseˡ _)
+
+
+  ^-sucˡ : ∀ x n → x ^ sucInt n ≡ x • x ^ n
+  ^-sucˡ x (pos n)                = refl
+  ^-sucˡ x (negsuc zero)          = sym (inverseʳ x)
+  ^-sucˡ x (negsuc (suc zero))    =
+    x ^ -1          ≡⟨⟩
+    x ⁻¹            ≡˘⟨ identityˡ _ ⟩
+    ε • x ⁻¹        ≡˘⟨ cong (_• x ⁻¹) (inverseʳ x) ⟩
+    x • x ⁻¹ • x ⁻¹ ≡⟨ assoc _ _ _ ⟩
+    x • (x ^ -2)    ∎
+  ^-sucˡ x (negsuc (suc (suc n))) =
+    x ^ sucInt (negsuc (suc (suc n)))  ≡⟨⟩
+    x ^ negsuc (suc n)                 ≡⟨⟩
+    x ⁻¹ • x ^ negsuc n                ≡⟨⟩
+    x ⁻¹ • x ^ sucInt (negsuc (suc n)) ≡⟨ cong (x ⁻¹ •_) (^-sucˡ x (negsuc (suc n))) ⟩
+    x ⁻¹ • (x • x ^ negsuc (suc n))    ≡˘⟨ assoc _ _ _ ⟩
+    x ⁻¹ • x • x ^ negsuc (suc n)      ≡˘⟨ cong (_• x ^ negsuc (suc n)) (inv-comm x) ⟩
+    x • x ⁻¹ • x ^ negsuc (suc n)      ≡⟨ assoc _ _ _ ⟩
+    x • (x ⁻¹ • x ^ negsuc (suc n))    ≡⟨⟩
+    x • x ^ negsuc (suc (suc n))       ∎
+
+  ^-sucʳ : ∀ x n → x ^ sucInt n ≡ x ^ n • x
+  ^-sucʳ x (pos zero)       = ε-comm x
+  ^-sucʳ x (pos (suc n))    =
+    x ^ pos (suc (suc n)) ≡⟨⟩
+    x • x ^ pos (suc n)   ≡⟨ cong (x •_) (^-sucʳ x (pos n)) ⟩
+    x • (x ^ pos n • x)   ≡˘⟨ assoc _ _ _ ⟩
+    x • x ^ pos n • x     ≡⟨⟩
+    x ^ pos (suc n) • x   ∎
+  ^-sucʳ x (negsuc zero)          = sym (inverseˡ x)
+  ^-sucʳ x (negsuc (suc zero))    =
+    x ⁻¹              ≡˘⟨ identityʳ _ ⟩
+    x ⁻¹ • ε          ≡˘⟨ cong (x ⁻¹ •_) (inverseˡ x) ⟩
+    x ⁻¹ • (x ⁻¹ • x) ≡˘⟨ assoc _ _ _ ⟩
+    x ^ -2 • x        ∎
+  ^-sucʳ x (negsuc (suc (suc n))) =
+    x ^ sucInt (negsuc (suc (suc n)))  ≡⟨⟩
+    x ^ negsuc (suc n)                 ≡⟨⟩
+    x ⁻¹ • x ^ negsuc n                ≡⟨⟩
+    x ⁻¹ • x ^ sucInt (negsuc (suc n)) ≡⟨ cong (x ⁻¹ •_) (^-sucʳ x (negsuc (suc n))) ⟩
+    x ⁻¹ • (x ^ negsuc (suc n) • x)    ≡˘⟨ assoc _ _ _ ⟩
+    x ⁻¹ • x ^ negsuc (suc n) • x      ≡⟨⟩
+    x ^ negsuc (suc (suc n)) • x       ∎
+
+  ^-predˡ : ∀ x n → x ^ predInt n ≡ x ⁻¹ • x ^ n
+  ^-predˡ x (pos zero) = sym (identityʳ _)
+  ^-predˡ x (pos (suc zero)) =
+    ε              ≡˘⟨ inverseˡ x ⟩
+    x ⁻¹ • x       ≡˘⟨ cong (x ⁻¹ •_) (identityʳ x) ⟩
+    x ⁻¹ • (x • ε) ∎
+  ^-predˡ x (pos (suc (suc n))) =
+    x ^ predInt (pos (suc (suc n))) ≡⟨⟩
+    x ^ pos (suc n)                 ≡⟨⟩
+    x • x ^ pos n                   ≡⟨⟩
+    x • x ^ predInt (pos (suc n))   ≡⟨ cong (x •_) (^-predˡ x (pos (suc n))) ⟩
+    x • (x ⁻¹ • x ^ pos (suc n))    ≡˘⟨ assoc _ _ _ ⟩
+    x • x ⁻¹ • x ^ pos (suc n)      ≡⟨ cong (_• x ^ pos (suc n)) (inv-comm x) ⟩
+    x ⁻¹ • x • x ^ pos (suc n)      ≡⟨ assoc _ _ _ ⟩
+    x ⁻¹ • (x • x ^ pos (suc n))    ≡⟨⟩
+    x ⁻¹ • x ^ pos (suc (suc n))    ∎
+  ^-predˡ x (negsuc n) = refl
+
+  ^-predʳ : ∀ x n → x ^ predInt n ≡ x ^ n • x ⁻¹
+  ^-predʳ x (pos zero) = sym (identityˡ _)
+  ^-predʳ x (pos (suc zero)) =
+    ε              ≡˘⟨ identityʳ _ ⟩
+    ε • ε          ≡˘⟨ cong (ε •_) (inverseʳ _) ⟩
+    ε • (x • x ⁻¹) ≡˘⟨ assoc _ _ _ ⟩
+    ε • x • x ⁻¹   ≡˘⟨ cong (_• x ⁻¹) (ε-comm _) ⟩
+    x • ε • x ⁻¹   ∎
+  ^-predʳ x (pos (suc (suc n))) =
+    x ^ predInt (pos (suc (suc n))) ≡⟨⟩
+    x ^ pos (suc n)                 ≡⟨⟩
+    x • x ^ pos n                   ≡⟨⟩
+    x • x ^ predInt (pos (suc n))   ≡⟨ cong (x •_) (^-predʳ x (pos (suc n))) ⟩
+    x • (x ^ pos (suc n) • x ⁻¹)    ≡˘⟨ assoc _ _ _ ⟩
+    x • x ^ pos (suc n) • x ⁻¹      ≡⟨⟩
+    x ^ pos (suc (suc n)) • x ⁻¹    ∎
+  ^-predʳ x (negsuc zero) = refl
+  ^-predʳ x (negsuc (suc n)) =
+    x ^ predInt (negsuc (suc n))  ≡⟨⟩
+    x ^ negsuc (suc (suc n))      ≡⟨⟩
+    x ⁻¹ • x ^ negsuc (suc n)     ≡⟨⟩
+    x ⁻¹ • x ^ predInt (negsuc n) ≡⟨ cong (x ⁻¹ •_) (^-predʳ x (negsuc n)) ⟩
+    x ⁻¹ • (x ^ negsuc n • x ⁻¹)  ≡˘⟨ assoc _ _ _ ⟩
+    x ⁻¹ • x ^ negsuc n • x ⁻¹    ≡⟨⟩
+    x ^ negsuc (suc n) • x ⁻¹     ∎
+
+  ^-plus : ∀ x → Homomorphic₂ (x ^_) _+_ _•_
+  ^-plus x m (pos zero) = sym (identityʳ (x ^ m))
+  ^-plus x m (pos (suc n)) =
+    x ^ sucInt (m +pos n)   ≡⟨ ^-sucʳ x (m +pos n) ⟩
+    x ^ (m +pos n) • x      ≡⟨ cong (_• x) (^-plus x m (pos n)) ⟩
+    x ^ m • x ^ pos n • x   ≡⟨ assoc _ _ _ ⟩
+    x ^ m • (x ^ pos n • x) ≡˘⟨ cong (x ^ m •_) (^-sucʳ x (pos n)) ⟩
+    x ^ m • x ^ pos (suc n) ∎
+  ^-plus x m (negsuc zero) = ^-predʳ x m
+  ^-plus x m (negsuc (suc n)) =
+    x ^ predInt (m +negsuc n)     ≡⟨ ^-predʳ x (m +negsuc n) ⟩
+    x ^ (m +negsuc n) • x ⁻¹      ≡⟨ cong (_• x ⁻¹) (^-plus x m (negsuc n)) ⟩
+    x ^ m • x ^ negsuc n • x ⁻¹   ≡⟨ assoc _ _ _ ⟩
+    x ^ m • (x ^ negsuc n • x ⁻¹) ≡˘⟨ cong (x ^ m •_) (^-predʳ x (negsuc n)) ⟩
+    x ^ m • x ^ negsuc (suc n)    ∎
+
+  _^′_ : Carrier → ℕ → Carrier
+  _^′_ = IsMonoid._^_ isMonoid
+
+  ^mon≡^ : ∀ x n → x ^′ n ≡ x ^ pos n
+  ^mon≡^ x zero = refl
+  ^mon≡^ x (suc n) = cong (x •_) (^mon≡^ x n)
+
+  ^semi≡^ : ∀ x n → x ^′′ n ≡ x ^ pos (ℕ₊₁→ℕ n)
+  ^semi≡^ x n = ^semi≡^mon x n ∙ ^mon≡^ x (ℕ₊₁→ℕ n)
+
+module Conjugation (G : Group ℓ) where
+  open Group G
+  open GroupLemmas G using (isEquiv-•ˡ; isEquiv-•ʳ)
+
+  module _ (g : Carrier) where
+
+    conjugate : Carrier → Carrier
+    conjugate x = g • x • g ⁻¹
+
+    conjugate-isEquiv : isEquiv conjugate
+    conjugate-isEquiv = compIsEquiv (isEquiv-•ˡ g) (isEquiv-•ʳ (g ⁻¹))
+
+    conjugate-hom : Homomorphic₂ conjugate _•_ _•_
+    conjugate-hom x y =
+      g • (x • y) • g ⁻¹              ≡˘⟨ cong (λ v → g • (v • y) • g ⁻¹) (identityʳ x) ⟩
+      g • (x • ε • y) • g ⁻¹          ≡˘⟨ cong (λ v → g • (x • v • y) • g ⁻¹) (inverseˡ g) ⟩
+      g • (x • (g ⁻¹ • g) • y) • g ⁻¹ ≡˘⟨ cong (λ v → g • (v • y) • g ⁻¹) (assoc _ _ _) ⟩
+      g • (x • g ⁻¹ • g • y) • g ⁻¹   ≡˘⟨ cong (_• g ⁻¹) (assoc _ _ _) ⟩
+      g • (x • g ⁻¹ • g) • y • g ⁻¹   ≡˘⟨ cong (λ v → v • y • g ⁻¹) (assoc _ _ _) ⟩
+      g • (x • g ⁻¹) • g • y • g ⁻¹   ≡˘⟨ cong (λ v → v • g • y • g ⁻¹) (assoc _ _ _) ⟩
+      g • x • g ⁻¹ • g • y • g ⁻¹     ≡⟨ cong (_• g ⁻¹) (assoc _ _ _) ⟩
+      g • x • g ⁻¹ • (g • y) • g ⁻¹   ≡⟨ assoc _ _ _ ⟩
+      g • x • g ⁻¹ • (g • y • g ⁻¹)   ∎
+
+    conjugate-isHom : IsGroupHom G G conjugate
+    conjugate-isHom = isgrouphom conjugate-hom
+
+    conjugate-Hom : GroupHom G G
+    conjugate-Hom = record { isHom = conjugate-isHom }
+
+    conjugate-Equiv : GroupEquiv G G
+    conjugate-Equiv = record { eq = conjugate , conjugate-isEquiv; isHom = conjugate-isHom }
+
+    conjugate-Path : G ≡ G
+    conjugate-Path = uaGroup conjugate-Equiv
+
+  Conjugate : Rel Carrier ℓ
+  Conjugate a b = Σ[ g ∈ Carrier ] conjugate g a ≡ b
+
+
+module Normal (G : Group ℓ) where
+
+
+open GroupLemmas public
+open Conjugation public
+open Normal public

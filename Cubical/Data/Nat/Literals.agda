@@ -8,9 +8,8 @@
 module Cubical.Data.Nat.Literals where
 
 open import Agda.Builtin.FromNat public
-  renaming (Number to HasFromNat)
+  renaming (Number to FromNat)
 open import Agda.Builtin.FromNeg public
-  renaming (Negative to HasFromNeg)
 open import Cubical.Data.Unit.Base public
 
 -- Natural number literals for ℕ
@@ -18,5 +17,5 @@ open import Cubical.Data.Unit.Base public
 open import Agda.Builtin.Nat renaming (Nat to ℕ)
 
 instance
-  fromNatℕ : HasFromNat ℕ
-  fromNatℕ = record { Constraint = λ _ → Unit ; fromNat = λ n → n }
+  fromNatℕ : FromNat ℕ
+  fromNatℕ = record { Constraint = λ _ → ⊤ ; fromNat = λ n → n }
