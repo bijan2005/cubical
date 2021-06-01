@@ -109,7 +109,3 @@ module Invertible (M : Monoid ℓ) where
 
 module Kernel {ℓ ℓ′} {M : Monoid ℓ} {N : Monoid ℓ′} (hom : MonoidHom M N)
   = Semigroup.Kernel (MonoidHom→SemigroupHom hom)
-
-
-open MonoidLemmas public
-open Invertible public

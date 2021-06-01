@@ -107,6 +107,3 @@ module Kernel {S : Semigroup ℓ} {T : Semigroup ℓ′} (hom : SemigroupHom S T
 
   emb→ker⇒id : isEmbedding f → Kernel ⇒ _≡_
   emb→ker⇒id isemb {x} {y} = invIsEq (isemb x y)
-
-
-open SemigroupLemmas public

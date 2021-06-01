@@ -33,9 +33,11 @@ private
   variable
     ℓ ℓ′ : Level
 
+
 isPropIsGroup : ∀ {G : Type ℓ} {_•_ ε _⁻¹} → isProp (IsGroup G _•_ ε _⁻¹)
 isPropIsGroup {G = G} {_•_} {ε} {_⁻¹} (isgroup aMon aInv) (isgroup bMon bInv) =
   cong₂ isgroup (isPropIsMonoid aMon bMon) (isPropInverse (IsMonoid.is-set aMon) _•_ _⁻¹ ε aInv bInv)
+
 
 module GroupLemmas (G : Group ℓ) where
   open Group G
@@ -222,6 +224,10 @@ module GroupLemmas (G : Group ℓ) where
   ^semi≡^ : ∀ x n → x ^′′ n ≡ x ^ pos (ℕ₊₁→ℕ n)
   ^semi≡^ x n = ^semi≡^mon x n ∙ ^mon≡^ x (ℕ₊₁→ℕ n)
 
+
+module Cosets (G : Group ℓ) where
+
+
 module Conjugation (G : Group ℓ) where
   open Group G
   open GroupLemmas G using (isEquiv-•ˡ; isEquiv-•ʳ)
@@ -247,7 +253,7 @@ module Conjugation (G : Group ℓ) where
       g • x • g ⁻¹ • (g • y • g ⁻¹)   ∎
 
     conjugate-isHom : IsGroupHom G G conjugate
-    conjugate-isHom = isgrouphom conjugate-hom
+    conjugatea-isHom = isgrouphom conjugate-hom
 
     conjugate-Hom : GroupHom G G
     conjugate-Hom = record { isHom = conjugate-isHom }
@@ -263,6 +269,7 @@ module Conjugation (G : Group ℓ) where
 
 
 module Normal (G : Group ℓ) where
+  open Group G
 
 
 module Kernel {G : Group ℓ} {H : Group ℓ′} (hom : GroupHom G H) where
@@ -314,8 +321,3 @@ module Kernel {G : Group ℓ} {H : Group ℓ′} (hom : GroupHom G H) where
 
   emb→ker⊆ε : isEmbedding f → Kernel ⊆ ｛ G.ε ｝
   emb→ker⊆ε emb = inj→ker⊆ε (invIsEq (emb _ _))
-
-
-open GroupLemmas public
-open Conjugation public
-open Normal public
