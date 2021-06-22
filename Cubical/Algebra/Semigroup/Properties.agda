@@ -4,8 +4,10 @@ module Cubical.Algebra.Semigroup.Properties where
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Isomorphism
+open import Cubical.Foundations.Function using (_∘_; id)
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.HLevels
+open import Cubical.Foundations.Logic using (_≡ₚ_)
 open import Cubical.Functions.Embedding
 open import Cubical.Data.Nat
 open import Cubical.Data.NatPlusOne
@@ -17,6 +19,7 @@ open import Cubical.Algebra.Magma.Properties using (isPropIsMagma)
 
 open import Cubical.Relation.Binary
 open import Cubical.Relation.Binary.Reasoning.Equality
+open import Cubical.HITs.PropositionalTruncation
 
 open import Cubical.Algebra.Semigroup.MorphismProperties public
   using (SemigroupPath; uaSemigroup; carac-uaSemigroup; Semigroup≡; caracSemigroup≡)
@@ -61,21 +64,21 @@ module Kernel {S : Semigroup ℓ} {T : Semigroup ℓ′} (hom : SemigroupHom S T
     module T = Semigroup T
   open SemigroupHom hom renaming (fun to f)
 
-  Kernel : Rel ⟨ S ⟩ ℓ′
-  Kernel x y = f x ≡ f y
+  Kernel′ : RawRel ⟨ S ⟩ ℓ′
+  Kernel′ x y = f x ≡ f y
 
-  isPropKernel : isPropValued Kernel
+  isPropKernel : isPropValued Kernel′
   isPropKernel x y = T.is-set (f x) (f y)
 
-  Kernelᴾ : PropRel ⟨ S ⟩ ℓ′
-  Kernelᴾ = Kernel , isPropKernel
+  Kernel : Rel ⟨ S ⟩ ℓ′
+  Kernel = fromRaw Kernel′ isPropKernel
 
 
   ker-reflexive : Reflexive Kernel
   ker-reflexive = refl
 
   ker-fromEq : FromEq Kernel
-  ker-fromEq = cong f
+  ker-fromEq = rec (isPropKernel _ _) (cong f)
 
   ker-symmetric : Symmetric Kernel
   ker-symmetric = sym
@@ -103,8 +106,8 @@ module Kernel {S : Semigroup ℓ} {T : Semigroup ℓ′} (hom : SemigroupHom S T
     }
 
 
-  ker⇒id→emb : Kernel ⇒ _≡_ → isEmbedding f
-  ker⇒id→emb ker⇒id = injEmbedding S.is-set T.is-set ker⇒id
+  ker⇒id→emb : Kernel ⇒ _≡ₚ_ → isEmbedding f
+  ker⇒id→emb ker⇒id = injEmbedding S.is-set T.is-set (λ p → rec (S.is-set _ _) id (ker⇒id p))
 
-  emb→ker⇒id : isEmbedding f → Kernel ⇒ _≡_
-  emb→ker⇒id isemb {x} {y} = invIsEq (isemb x y)
+  emb→ker⇒id : isEmbedding f → Kernel ⇒ _≡ₚ_
+  emb→ker⇒id isemb {x} {y} = ∣_∣ ∘ invIsEq (isemb x y)

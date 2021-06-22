@@ -4,6 +4,7 @@ module Cubical.Algebra.Group.Properties where
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.Function using (id)
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Function using (flip)
@@ -18,12 +19,13 @@ open import Cubical.Data.Prod
 open import Cubical.Algebra
 open import Cubical.Algebra.Properties
 open import Cubical.Algebra.Group.Morphism
-import Cubical.Algebra.Group.Construct.Subgroup as Subgroup
+open import Cubical.Algebra.Group.Subgroup
 
 open import Cubical.Algebra.Monoid.Properties using (isPropIsMonoid; module MonoidLemmas)
 
 open import Cubical.Relation.Unary as Unary hiding (isPropValued)
 open import Cubical.Relation.Binary as Binary hiding (isPropValued)
+open import Cubical.HITs.PropositionalTruncation
 open import Cubical.Relation.Binary.Reasoning.Equality
 
 open import Cubical.Algebra.Group.MorphismProperties public
@@ -214,7 +216,7 @@ module GroupLemmas (G : Group ℓ) where
     x ^ m • (x ^ negsuc n • x ⁻¹) ≡˘⟨ cong (x ^ m •_) (^-predʳ x (negsuc n)) ⟩
     x ^ m • x ^ negsuc (suc n)    ∎
 
-  _^′_ : Carrier → ℕ → Carrier
+  _^′_ : ⟨ G ⟩ → ℕ → ⟨ G ⟩
   _^′_ = IsMonoid._^_ isMonoid
 
   ^mon≡^ : ∀ x n → x ^′ n ≡ x ^ pos n
@@ -224,11 +226,6 @@ module GroupLemmas (G : Group ℓ) where
   ^semi≡^ : ∀ x n → x ^′′ n ≡ x ^ pos (ℕ₊₁→ℕ n)
   ^semi≡^ x n = ^semi≡^mon x n ∙ ^mon≡^ x (ℕ₊₁→ℕ n)
 
-
-module Cosets (G : Group ℓ) (H : PropPred ⟨ G ⟩ ℓ′) where
-  open Group G
-
-  open Subgroup
 
 module Conjugation (G : Group ℓ) where
   open Group G
@@ -255,7 +252,7 @@ module Conjugation (G : Group ℓ) where
       g • x • g ⁻¹ • (g • y • g ⁻¹)   ∎
 
     conjugate-isHom : IsGroupHom G G conjugate
-    conjugatea-isHom = isgrouphom conjugate-hom
+    conjugate-isHom = isgrouphom conjugate-hom
 
     conjugate-Hom : GroupHom G G
     conjugate-Hom = record { isHom = conjugate-isHom }
@@ -266,8 +263,9 @@ module Conjugation (G : Group ℓ) where
     conjugate-Path : G ≡ G
     conjugate-Path = uaGroup conjugate-Equiv
 
-  Conjugate : Rel Carrier ℓ
-  Conjugate a b = Σ[ g ∈ Carrier ] conjugate g a ≡ b
+  Conjugate : Rel ⟨ G ⟩ ℓ
+  Conjugate a b = (∃[ g ∈ ⟨ G ⟩ ] conjugate g a ≡ b) , squash
+
 
 
 module Normal (G : Group ℓ) where
@@ -275,20 +273,21 @@ module Normal (G : Group ℓ) where
 
 
 module Kernel {G : Group ℓ} {H : Group ℓ′} (hom : GroupHom G H) where
-  module G = Group G
-  module H = Group H
+  private
+    module G = Group G
+    module H = Group H
   open GroupHom hom renaming (fun to f)
   open GroupLemmas
 
 
-  Kernel : Pred ⟨ G ⟩ ℓ′
-  Kernel x = f x ≡ H.ε
+  Kernel′ : RawPred ⟨ G ⟩ ℓ′
+  Kernel′ x = f x ≡ H.ε
 
-  isPropKernel : Unary.isPropValued Kernel
+  isPropKernel : Unary.isPropValued Kernel′
   isPropKernel x = H.is-set (f x) H.ε
 
-  Kernelᵖ : PropPred ⟨ G ⟩ ℓ′
-  Kernelᵖ = Kernel , isPropKernel
+  Kernel : Pred ⟨ G ⟩ ℓ′
+  Kernel = Unary.fromRaw Kernel′ isPropKernel
 
 
   ker-preservesId : G.ε ∈ Kernel
@@ -310,7 +309,7 @@ module Kernel {G : Group ℓ} {H : Group ℓ′} (hom : GroupHom G H) where
 
 
   ker⊆ε→inj : Kernel ⊆ ｛ G.ε ｝ → ∀ {x y} → f x ≡ f y → x ≡ y
-  ker⊆ε→inj sub fx≡fy = inv-≡ʳ G (sub (preservesOp+Inv _ _ ∙ ≡-invʳ H fx≡fy))
+  ker⊆ε→inj sub fx≡fy = inv-≡ʳ G (rec (G.is-set _ _) id (sub (preservesOp+Inv _ _ ∙ ≡-invʳ H fx≡fy)))
     where
       preservesOp+Inv : ∀ a b → f (a G.• b G.⁻¹) ≡ f a H.• f b H.⁻¹
       preservesOp+Inv a b = preservesOp a (b G.⁻¹) ∙ cong (f a H.•_) (preservesInv b)
@@ -319,7 +318,7 @@ module Kernel {G : Group ℓ} {H : Group ℓ′} (hom : GroupHom G H) where
   ker⊆ε→emb sub = injEmbedding G.is-set H.is-set (ker⊆ε→inj sub)
 
   inj→ker⊆ε : (∀ {x y} → f x ≡ f y → x ≡ y) → Kernel ⊆ ｛ G.ε ｝
-  inj→ker⊆ε inj fx≡ε = inj (fx≡ε ∙ sym preservesId)
+  inj→ker⊆ε inj fx≡ε = ∣ inj (fx≡ε ∙ sym preservesId) ∣
 
   emb→ker⊆ε : isEmbedding f → Kernel ⊆ ｛ G.ε ｝
   emb→ker⊆ε emb = inj→ker⊆ε (invIsEq (emb _ _))

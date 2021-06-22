@@ -24,13 +24,14 @@ private
     B : Type b
     C : Type c
 
-infix 8 _⟶_Respects_ _Respects_ _Respectsˡ_ _Respectsʳ_ _Respects₂_
-
 
 ------------------------------------------------------------------------
 -- Basic defintions
 ------------------------------------------------------------------------
 
+
+infix 7 _⇒_ _⇔_ _=[_]⇒_
+infix 8 _⟶_Respects_ _Respects_ _Respectsˡ_ _Respectsʳ_ _Respects₂_
 
 idRel : (A : Type ℓ) → Rel A ℓ
 idRel A a b .fst = ∥ a ≡ b ∥
@@ -47,8 +48,6 @@ graphRel : {B : Type b} → (A → B) → isSet B → REL A B b
 graphRel f isSetB a b .fst = f a ≡ b
 graphRel f isSetB a b .snd = isSetB (f a) b
 
-
-infix 7 _⇒_ _⇔_ _=[_]⇒_
 
 -- Implication/containment - could also be written _⊆_.
 -- and corresponding notion of equivalence

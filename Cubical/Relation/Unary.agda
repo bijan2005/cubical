@@ -154,7 +154,7 @@ Decidable P = ∀ x → Dec (x ∈ P)
 -- Operations on sets
 
 infix 10 ⋃ ⋂
-infixr 9 _⊢_
+infixr 9 _⊢_ _⊣_
 infixr 8 _⇒_
 infixr 7 _∩_
 infixr 6 _∪_

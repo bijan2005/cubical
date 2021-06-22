@@ -15,8 +15,9 @@ open import Cubical.Algebra.Monoid.Morphism
 
 open import Cubical.Algebra.Semigroup.Properties as Semigroup using (isPropIsSemigroup)
 
-open import Cubical.Relation.Binary
 open import Cubical.Relation.Binary.Reasoning.Equality
+open import Cubical.Relation.Unary as Unary
+open import Cubical.Relation.Binary as Binary
 
 open import Cubical.Algebra.Monoid.MorphismProperties public
   using (MonoidPath; uaMonoid; carac-uaMonoid; Monoid≡; caracMonoid≡)
@@ -72,14 +73,15 @@ module MonoidLemmas (M : Monoid ℓ) where
 module Invertible (M : Monoid ℓ) where
   open Monoid M
 
-  Inverses : Rel Carrier ℓ
-  Inverses x y = (x • y ≡ ε) × (y • x ≡ ε)
+  Inverses′ : RawRel ⟨ M ⟩ ℓ
+  Inverses′ x y = (x • y ≡ ε) × (y • x ≡ ε)
 
-  isPropInverses : isPropValued Inverses
+  isPropInverses : Binary.isPropValued Inverses′
   isPropInverses _ _ = isPropProd (is-set _ _) (is-set _ _)
 
-  Inversesᴿ : PropRel Carrier ℓ
-  Inversesᴿ = Inverses , isPropInverses
+  Inverses : Rel ⟨ M ⟩ ℓ
+  Inverses = Binary.fromRaw Inverses′ isPropInverses
+
 
   inv-unique′ : ∀ {x y z} → x • y ≡ ε → z • x ≡ ε → y ≡ z
   inv-unique′ {x} {y} {z} xy≡ε zx≡ε =
@@ -90,20 +92,25 @@ module Invertible (M : Monoid ℓ) where
     z • ε       ≡⟨ identityʳ z ⟩
     z           ∎
 
-  inv-unique : ∀ {x y z} → Inverses x y → Inverses x z → y ≡ z
+  inv-unique : ∀ {x y z} → ⟨ Inverses x y ⟩ → ⟨ Inverses x z ⟩ → y ≡ z
   inv-unique (xy≡ε , _) (_ , zx≡ε) = inv-unique′ xy≡ε zx≡ε
 
-  Invertible : Carrier → Type ℓ
-  Invertible x = Σ Carrier (Inverses x)
 
-  isPropInvertible : ∀ x → isProp (Invertible x)
+  Invertible′ : RawPred ⟨ M ⟩ ℓ
+  Invertible′ x = Σ ⟨ M ⟩ (Inverses′ x)
+
+  isPropInvertible : Unary.isPropValued Invertible′
   isPropInvertible x (y , x-y) (z , x-z) = ΣPathTransport→PathΣ (y , x-y) (z , x-z)
                                           (inv-unique x-y x-z , isPropInverses _ _ _ _)
 
-  εInverses : Inverses ε ε
+  Invertible : Pred ⟨ M ⟩ ℓ
+  Invertible = Unary.fromRaw Invertible′ isPropInvertible
+
+
+  εInverses : ⟨ Inverses ε ε ⟩
   εInverses = identityˡ ε , identityˡ ε
 
-  εInvertible : Invertible ε
+  εInvertible : ε ∈ Invertible
   εInvertible = ε , εInverses
 
 
