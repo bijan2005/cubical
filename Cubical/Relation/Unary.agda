@@ -11,6 +11,7 @@ open import Cubical.Structures.Carrier
 import Cubical.Foundations.Logic as L
 
 open import Cubical.Data.Sigma
+open import Cubical.Data.Empty using (⊥)
 open import Cubical.Data.Sum.Base using (_⊎_; rec)
 open import Cubical.Foundations.Function
 
@@ -150,6 +151,16 @@ syntax IUniversal P = ∀[ P ]
 Decidable : Pred A ℓ → Type _
 Decidable P = ∀ x → Dec (x ∈ P)
 
+-- Disjointness - Any element satifsying both P and Q is contradictory.
+
+_⊃⊂_ : Pred A ℓ₁ → Pred A ℓ₂ → Type _
+_⊃⊂_ P Q = ∀ {x} → x ∈ P → x ∈ Q → ⊥
+
+-- Positive version of non-disjointness, dual to inclusion.
+
+_≬_ : Pred A ℓ₁ → Pred A ℓ₂ → Type _
+_≬_ {A = A} P Q = ∃[ x ∈ A ] x ∈ P × x ∈ Q
+
 ------------------------------------------------------------------------
 -- Operations on sets
 
@@ -193,11 +204,6 @@ syntax ⋃ I (λ i → P) = ⋃[ i ∶ I ] P
 
 syntax ⋂ I (λ i → P) = ⋂[ i ∶ I ] P
 
--- Positive version of non-disjointness, dual to inclusion.
-
-_≬_ : Pred A ℓ₁ → Pred A ℓ₂ → Type _
-_≬_ {A = A} P Q = ∃[ x ∈ A ] x ∈ P × x ∈ Q
-
 -- Preimage.
 
 _⊢_ : (A → B) → Pred B ℓ → Pred A ℓ
@@ -206,7 +212,7 @@ f ⊢ P = λ x → P (f x)
 -- Image.
 
 _⊣_ : (A → B) → Pred A ℓ → Pred B _
-f ⊣ P = λ x → L.∥ Σ[ y ∈ _ ] y ∈ P × (f y ≡ x) ∥ₚ
+f ⊣ P = λ x → L.∥ Σ[ (y , _) ∈ Σ _ (_∈ P) ] (f y ≡ x) ∥ₚ
 
 
 ------------------------------------------------------------------------
@@ -254,6 +260,15 @@ module _ (P : Pred A ℓ₁) (Q : Pred A ℓ₂) where
 
 equiv≡ : _⇔_ ≡ _⇚⇛_ {ℓ₁} {A} {ℓ₂} {ℓ}
 equiv≡ = funExt (λ P → funExt (λ Q → ua (equiv≃ P Q)))
+
+
+module _ (P Q : Pred A ℓ) where
+
+  ⇚⇛toPath : P ⇚⇛ Q → P ≡ Q
+  ⇚⇛toPath P⇚⇛Q = funExt (λ x → L.hProp≡ (ua (P⇚⇛Q x)))
+
+  ⇔toPath : P ⇔ Q → P ≡ Q
+  ⇔toPath P⇔Q = ⇚⇛toPath (⇔-⇚⇛ P Q P⇔Q)
 
 ------------------------------------------------------------------------
 -- Predicate combinators

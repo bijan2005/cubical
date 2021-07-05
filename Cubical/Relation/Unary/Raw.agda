@@ -117,6 +117,16 @@ syntax IUniversal P = ∀[ P ]
 Decidable : RawPred A ℓ → Type _
 Decidable P = ∀ x → Dec (P x)
 
+-- Disjointness - Any element satisfying both P and Q is contradictory.
+
+_⊃⊂_ : RawPred A ℓ₁ → RawPred A ℓ₂ → Type _
+_⊃⊂_ P Q = ∀ {x} → x ∈ P → x ∈ Q → ⊥
+
+-- Positive version of non-disjointness, dual to inclusion.
+
+_≬_ : RawPred A ℓ₁ → RawPred A ℓ₂ → Type _
+_≬_ {A = A} P Q = ∃[ x ∈ A ] x ∈ P × x ∈ Q
+
 ------------------------------------------------------------------------
 -- Operations on sets
 
@@ -160,11 +170,6 @@ syntax ⋃ I (λ i → P) = ⋃[ i ∶ I ] P
 ⋂ I P = λ x → (i : I) → P i x
 
 syntax ⋂ I (λ i → P) = ⋂[ i ∶ I ] P
-
--- Positive version of non-disjointness, dual to inclusion.
-
-_≬_ : RawPred A ℓ₁ → RawPred A ℓ₂ → Type _
-_≬_ {A = A} P Q = ∃[ x ∈ A ] x ∈ P × x ∈ Q
 
 -- Preimage.
 
