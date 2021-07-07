@@ -304,13 +304,14 @@ _⟨⊙⟩_ : Pred A ℓ₁ → Pred B ℓ₂ → Pred (A × B) _
 -- Implication.
 
 _⟨→⟩_ : Pred A ℓ₁ → Pred B ℓ₂ → Pred (A → B) _
-(P ⟨→⟩ Q) f = L.∀[ x ∶ _ ] P x L.⇒ Q (f x)
+(P ⟨→⟩ Q) f = (∀ {x} → x ∈ P → f x ∈ Q) , isPropImplicitΠ λ _ → isPropΠ
+                                                          λ _ → isProp[ Q ] _
 
 -- Product.
 
 _⟨·⟩_ : (P : Pred A ℓ₁) (Q : Pred B ℓ₂) →
-        (P ⟨×⟩ (P ⟨→⟩ Q)) ⊆ Q ∘ uncurry (flip _$_)
-(P ⟨·⟩ Q) (p , f) = f _ p
+        (P ⟨×⟩ (P ⟨→⟩ Q)) ⊆ uncurry (flip _$_) ⊢ Q
+(P ⟨·⟩ Q) (p , f) = f p
 
 -- Converse.
 
@@ -325,7 +326,9 @@ _⟨∘⟩_ {B = B} P Q (x , z) = L.∃[ y ∶ B ] P (x , y) L.⊓ Q (y , z)
 -- Post-division.
 
 _//_ : Pred (A × C) ℓ₁ → Pred (B × C) ℓ₂ → Pred (A × B) _
-(P // Q) (x , y) = L.∀[ z ∶ _ ] Q (y , z) L.⇒ P (x , z)
+(P // Q) (x , y) = (∀ {z} → (y , z) ∈ Q → (x , z) ∈ P) ,
+                      isPropImplicitΠ λ _ → isPropΠ
+                                      λ _ → isProp[ P ] _
 
 -- Pre-division.
 
