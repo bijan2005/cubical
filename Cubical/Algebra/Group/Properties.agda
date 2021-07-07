@@ -4,10 +4,9 @@ module Cubical.Algebra.Group.Properties where
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
-open import Cubical.Foundations.Function using (id)
+open import Cubical.Foundations.Function using (id; flip)
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Function using (flip)
 open import Cubical.Functions.Embedding
 
 open import Cubical.Data.Nat hiding (_+_; _*_)
